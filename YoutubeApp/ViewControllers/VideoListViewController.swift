@@ -9,9 +9,13 @@ import UIKit
 import Alamofire
 import SwiftUI
 
-class ViewController: UIViewController {
+class VideoListViewController: UIViewController {
 
     @IBOutlet weak var videoListCollectionView: UICollectionView!
+    @IBOutlet weak var profileImageView: UIImageView!
+    @IBOutlet weak var headerView: UIView!
+    @IBOutlet weak var headerHeightConstrait: NSLayoutConstraint!
+    @IBOutlet weak var headerTopConstrait: NSLayoutConstraint!
     
     private let cellId = "cellId"
     private var videoItems = [Item]()
@@ -25,6 +29,8 @@ class ViewController: UIViewController {
         
         videoListCollectionView.register(UINib(nibName: "VideoListCell", bundle: nil), forCellWithReuseIdentifier: cellId)
         
+        profileImageView.layer.cornerRadius = 20
+        
         fetchSearchInfo()
         
     }
@@ -32,7 +38,7 @@ class ViewController: UIViewController {
     private func fetchSearchInfo() {
         let params = ["q": "pokemon"]
         
-        APIRequest.shared.request(path: .search, params: params, type: Video.self) { (video) in
+        API.shared.request(path: .search, params: params, type: Video.self) { (video) in
             self.videoItems = video.items
             let id = self.videoItems[0].snippet.channelId
             self.fetchChannelInfo(id: id)
@@ -45,7 +51,7 @@ class ViewController: UIViewController {
             "id": id
         ]
         
-        APIRequest.shared.request(path: .channels, params: params, type: Channel.self) { (channel) in
+        API.shared.request(path: .channels, params: params, type: Channel.self) { (channel) in
             self.videoItems.forEach{ (item) in
                 item.channel = channel
             }
@@ -56,7 +62,16 @@ class ViewController: UIViewController {
 
 }
 
-extension ViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+extension VideoListViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        let videoViewController = UIStoryboard(name: "Video", bundle: nil).instantiateViewController(identifier: "VideoViewController") as! VideoViewController
+        videoViewController.modalPresentationStyle = .fullScreen
+        videoViewController.selectedItem = videoItems[indexPath.row]
+        
+        self.present(videoViewController, animated: true, completion: nil)
+    }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = self.view.frame.width
